@@ -107,6 +107,7 @@ const fetchFilteredDataFromRealtorAPI = async (filters) => {
   }
 };
 
+
 app.get("/get-data", async (req, res) => {
   try {
     // Extract filters from query parameters
@@ -114,6 +115,73 @@ app.get("/get-data", async (req, res) => {
 
     // Fetch data with filters
     const data = await fetchFilteredDataFromRealtorAPI(filters);
+
+    // Send the filtered data to the client
+    res.json(data);
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch filtered data from Realtor.ca API" });
+  }
+});
+
+
+const fetchDetailFromRealtorAPI = async (ListingKey) => {
+  const apiUrl = "https://ddfapi.realtor.ca/odata/v1/Property";
+
+  try {
+
+      // Create URL-encoded form data for the token request
+      const formData = new URLSearchParams();
+      formData.append("client_id", "6kLhX0JJDcRfKPnqWBP2ngva");
+      formData.append("client_secret", "AEbLWbYj1AFh6SgRSh4RoJUw");
+      formData.append("grant_type", "client_credentials");
+      formData.append("scope", "DDFApi_Read");
+  
+      // Obtain a new access token by making a POST request to your token endpoint
+      const tokenResponse = await fetch("https://identity.crea.ca/connect/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData,
+      });
+
+    if (!tokenResponse.ok) {
+      throw new Error(`Failed to obtain access token! Status: ${tokenResponse.status}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+
+    const response = await fetch(`${apiUrl}/${ListingKey}`, {
+      method: "GET",
+      headers: {
+        Authorization:
+          `Bearer ${tokenData.access_token}`, 
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('fetched data')
+    return data;
+  } catch (error) {
+    console.error("Error:", error);
+    return { error: "Failed to fetch filtered data from Realtor.ca API" };
+  }
+};
+
+app.get("/get-details", async (req, res) => {
+  try {
+    // Extract filters from query parameters
+    const ListingKey = req.query;
+
+    // Fetch data with filters
+    const data = await fetchDetailFromRealtorAPI(ListingKey);
 
     // Send the filtered data to the client
     res.json(data);
@@ -157,7 +225,7 @@ app.get("/get-data", async (req, res) => {
 //     res.status(500).json({ error: 'Failed to fetch data from Realtor.ca API' });
 //   }
 // });
-app.get("/get-data", async (req, res) => {
+app.get("/", async (req, res) => {
   return "server is running succesfully"
 });
 
