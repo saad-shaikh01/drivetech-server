@@ -128,8 +128,8 @@ app.get("/get-data", async (req, res) => {
 
 
 const fetchDetailFromRealtorAPI = async (ListingKey) => {
-  const apiUrl = "https://ddfapi.realtor.ca/odata/v1/Property";
-
+  const apiUrl = `https://ddfapi.realtor.ca/odata/v1/Property/${ListingKey}`;
+  console.log(ListingKey)
   try {
 
       // Create URL-encoded form data for the token request
@@ -154,7 +154,7 @@ const fetchDetailFromRealtorAPI = async (ListingKey) => {
 
     const tokenData = await tokenResponse.json();
 
-    const response = await fetch(`${apiUrl}/${ListingKey}`, {
+    const response = await fetch(`${apiUrl}`, {
       method: "GET",
       headers: {
         Authorization:
@@ -178,8 +178,8 @@ const fetchDetailFromRealtorAPI = async (ListingKey) => {
 app.get("/get-details", async (req, res) => {
   try {
     // Extract filters from query parameters
-    const ListingKey = req.query;
-
+    const { ListingKey } = req.query;
+    console.log(ListingKey)
     // Fetch data with filters
     const data = await fetchDetailFromRealtorAPI(ListingKey);
 
