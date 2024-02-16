@@ -157,6 +157,10 @@ app.get("/get-data", async (req, res) => {
 //     res.status(500).json({ error: 'Failed to fetch data from Realtor.ca API' });
 //   }
 // });
+app.get("/get-data", async (req, res) => {
+  return "server is running succesfully"
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
