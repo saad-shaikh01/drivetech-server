@@ -11,7 +11,7 @@ app.post("/submit-form", async (req, res) => {
   try {
     console.log(req.body);
     // Extract email from the request body
-    const { email } = req.body;
+    const { email, message } = req.body;
 
     // Your nodemailer configuration
     const transporter = nodemailer.createTransport({
@@ -27,7 +27,10 @@ app.post("/submit-form", async (req, res) => {
       from: "asmatechdevelopers@gmail.com", // Replace with your Gmail address
       to: "saadshaikh0316@gmail.com", // Replace with your support team's email address
       subject: "New Subscription",
-      text: `New email subscription: ${email}`,
+      text: `
+      New email subscription: ${email}
+      Text message: ${message}
+      `,
     };
 
     // Send the email
@@ -52,61 +55,72 @@ app.post("/submit-form", async (req, res) => {
 //     }
 //   });
 
+// const { '$filter': filter } = filters;
+// const filtered = `$filter=${filter}`
 const fetchFilteredDataFromRealtorAPI = async (filters) => {
   const apiUrl = "https://ddfapi.realtor.ca/odata/v1/Property";
-  const { '$filter': filter } = filters;
 
+  const { $filter: filter, $select: select } = filters;
+
+  // Constructing the URL with URLSearchParams
+  const params = new URLSearchParams();
+  if (filter) {
+    params.set("$filter", filter);
+  }
+  if (select) {
+    params.set("", select);
+  }
+  console.log("here is select", select);
+  const finalUrl = apiUrl + (params.toString() ? `?${params.toString()}` : "");
+  console.log(finalUrl);
   try {
+    const formData = new URLSearchParams();
+    formData.append("client_id", "6kLhX0JJDcRfKPnqWBP2ngva");
+    formData.append("client_secret", "AEbLWbYj1AFh6SgRSh4RoJUw");
+    formData.append("grant_type", "client_credentials");
+    formData.append("scope", "DDFApi_Read");
 
-      // Create URL-encoded form data for the token request
-      const formData = new URLSearchParams();
-      formData.append("client_id", "6kLhX0JJDcRfKPnqWBP2ngva");
-      formData.append("client_secret", "AEbLWbYj1AFh6SgRSh4RoJUw");
-      formData.append("grant_type", "client_credentials");
-      formData.append("scope", "DDFApi_Read");
-  
-      // Obtain a new access token by making a POST request to your token endpoint
-      const tokenResponse = await fetch("https://identity.crea.ca/connect/token", {
+    // Obtain a new access token by making a POST request to your token endpoint
+    const tokenResponse = await fetch(
+      "https://identity.crea.ca/connect/token",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData,
-      });
+      }
+    );
 
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to obtain access token! Status: ${tokenResponse.status}`);
+      throw new Error(
+        `Failed to obtain access token! Status: ${tokenResponse.status}`
+      );
     }
 
     const tokenData = await tokenResponse.json();
 
+    // console.log("here is filtere data");
 
-
-
-
-
-
-    const response = await fetch(`${apiUrl}?${filter}`, {
+    const response = await fetch(finalUrl, {
       method: "GET",
       headers: {
-        Authorization:
-          `Bearer ${tokenData.access_token}`, 
+        Authorization: `Bearer ${tokenData.access_token}`,
       },
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+      throw new Error(`HTTP error! Status: ${response.json()}`);
     }
 
     const data = await response.json();
-    console.log('fetched data')
+    console.log("fetched data", response.status);
     return data;
   } catch (error) {
     console.error("Error:", error);
     return { error: "Failed to fetch filtered data from Realtor.ca API" };
   }
 };
-
 
 app.get("/get-data", async (req, res) => {
   try {
@@ -126,30 +140,33 @@ app.get("/get-data", async (req, res) => {
   }
 });
 
-
 const fetchDetailFromRealtorAPI = async (ListingKey) => {
   const apiUrl = `https://ddfapi.realtor.ca/odata/v1/Property/${ListingKey}`;
-  console.log(ListingKey)
+  console.log(ListingKey);
   try {
+    // Create URL-encoded form data for the token request
+    const formData = new URLSearchParams();
+    formData.append("client_id", "6kLhX0JJDcRfKPnqWBP2ngva");
+    formData.append("client_secret", "AEbLWbYj1AFh6SgRSh4RoJUw");
+    formData.append("grant_type", "client_credentials");
+    formData.append("scope", "DDFApi_Read");
 
-      // Create URL-encoded form data for the token request
-      const formData = new URLSearchParams();
-      formData.append("client_id", "6kLhX0JJDcRfKPnqWBP2ngva");
-      formData.append("client_secret", "AEbLWbYj1AFh6SgRSh4RoJUw");
-      formData.append("grant_type", "client_credentials");
-      formData.append("scope", "DDFApi_Read");
-  
-      // Obtain a new access token by making a POST request to your token endpoint
-      const tokenResponse = await fetch("https://identity.crea.ca/connect/token", {
+    // Obtain a new access token by making a POST request to your token endpoint
+    const tokenResponse = await fetch(
+      "https://identity.crea.ca/connect/token",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
         },
         body: formData,
-      });
+      }
+    );
 
     if (!tokenResponse.ok) {
-      throw new Error(`Failed to obtain access token! Status: ${tokenResponse.status}`);
+      throw new Error(
+        `Failed to obtain access token! Status: ${tokenResponse.status}`
+      );
     }
 
     const tokenData = await tokenResponse.json();
@@ -157,8 +174,7 @@ const fetchDetailFromRealtorAPI = async (ListingKey) => {
     const response = await fetch(`${apiUrl}`, {
       method: "GET",
       headers: {
-        Authorization:
-          `Bearer ${tokenData.access_token}`, 
+        Authorization: `Bearer ${tokenData.access_token}`,
       },
     });
 
@@ -167,7 +183,7 @@ const fetchDetailFromRealtorAPI = async (ListingKey) => {
     }
 
     const data = await response.json();
-    console.log('fetched data')
+    console.log("fetched data");
     return data;
   } catch (error) {
     console.error("Error:", error);
@@ -179,7 +195,7 @@ app.get("/get-details", async (req, res) => {
   try {
     // Extract filters from query parameters
     const { ListingKey } = req.query;
-    console.log(ListingKey)
+    console.log(ListingKey);
     // Fetch data with filters
     const data = await fetchDetailFromRealtorAPI(ListingKey);
 
@@ -226,7 +242,7 @@ app.get("/get-details", async (req, res) => {
 //   }
 // });
 app.get("/", async (req, res) => {
-  return "server is running succesfully"
+  return "server is running succesfully";
 });
 
 app.listen(port, () => {
