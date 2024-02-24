@@ -60,18 +60,18 @@ app.post("/submit-form", async (req, res) => {
 const fetchFilteredDataFromRealtorAPI = async (filters) => {
   const apiUrl = "https://ddfapi.realtor.ca/odata/v1/Property";
 
-  const { $filter: filter, $select: select } = filters;
+  const { $filter: filter } = filters;
 
   // Constructing the URL with URLSearchParams
   const params = new URLSearchParams();
   if (filter) {
     params.set("$filter", filter);
   }
-  if (select) {
-    params.set("", select);
-  }
-  console.log("here is select", select);
-  const finalUrl = apiUrl + (params.toString() ? `?${params.toString()}` : "");
+  // if (select) {
+  //   params.set("", select);
+  // }
+  console.log("here is select", filter);
+  const finalUrl = apiUrl + (params.toString() ? `?${params.toString()} &$top=50` : "?$top=60");
   console.log(finalUrl);
   try {
     const formData = new URLSearchParams();
